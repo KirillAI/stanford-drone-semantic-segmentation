@@ -9,9 +9,14 @@ import cv2
 import pandas as pd
 import numpy as np
 from sklearn.preprocessing import LabelEncoder
+from random import random, seed
 
 IMG_WIDTH = 224
 IMG_HEIGHT = 224
+
+n_classes = 6
+
+test_size = 0.1
 
 @click.command()
 @click.argument('input_filepath', type=click.Path(exists=True))
@@ -31,10 +36,16 @@ def main(input_filepath, output_filepath):
         annotation_path = annotation_path.replace('video.mov', 'annotations.txt')
         paths.append((video_path, annotation_path))
     
-    target_path_images = os.path.join(output_filepath, 'all', 'images')
-    target_path_masks = os.path.join(output_filepath, 'all', 'masks')
-    os.makedirs(target_path_images, exist_ok=True)
-    os.makedirs(target_path_masks, exist_ok=True)
+    target_path_train_images = os.path.join(output_filepath, 'train', 'images')
+    target_path_train_masks = os.path.join(output_filepath, 'train', 'masks')
+    target_path_val_images = os.path.join(output_filepath, 'validation', 'images')
+    target_path_val_masks = os.path.join(output_filepath, 'validation', 'masks')
+    os.makedirs(target_path_train_images, exist_ok=True)
+    os.makedirs(target_path_train_masks, exist_ok=True)
+    os.makedirs(target_path_val_images, exist_ok=True)
+    os.makedirs(target_path_val_masks, exist_ok=True)
+
+    seed(0) #для воспроизводимости экспериментов
 
     video_id = 0
     dic_annotations = {}
@@ -66,6 +77,12 @@ def main(input_filepath, output_filepath):
             obj_frame = df.loc[df['frame'] == count]
             n_obj = len(obj_frame.index)
             if n_obj > 0:
+                if random() < test_size: #деление на обучение и тест
+                    target_path_images = target_path_val_images
+                    target_path_masks = target_path_val_masks
+                else:
+                    target_path_images = target_path_train_images
+                    target_path_masks = target_path_train_masks
                 resized_image = cv2.resize(image, (IMG_WIDTH, IMG_HEIGHT))
                 image_path = 'frame_{:05d}_{:05d}.png'.format(video_id, count)
                 full_image_path = os.path.join(target_path_images, image_path)
