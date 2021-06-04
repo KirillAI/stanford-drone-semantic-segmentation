@@ -25,8 +25,13 @@ requirements: test_environment
 	$(PYTHON_INTERPRETER) -m pip install -U pip setuptools wheel
 	$(PYTHON_INTERPRETER) -m pip install -r requirements.txt
 
+## Download Stanford Drone Dataset
+download:
+	test -f data/raw/stanford_campus_dataset.zip || wget -O data/raw/stanford_campus_dataset.zip http://vatic2.stanford.edu/stanford_campus_dataset.zip
+
 ## Make Dataset
-data: requirements
+data: download
+	unzip data/raw/stanford_campus_dataset.zip -d data/raw
 	$(PYTHON_INTERPRETER) src/data/make_dataset.py data/raw data/processed
 
 ## Delete all compiled Python files
