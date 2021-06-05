@@ -97,7 +97,7 @@ def main(input_filepath, output_filepath):
                     ymax = int(one_object['ymax'] * scale_height)
                     label_value = le.transform(one_object['label'])[0] + 1
                     mask[ymin: ymax+1, xmin:xmax+1, ...] = label_value
-                mask_path = 'mask_{:05d}_{:05d}.png'.format(video_id, count)
+                mask_path = 'frame_{:05d}_{:05d}.png'.format(video_id, count)
                 full_mask_path = os.path.join(target_path_masks, mask_path)
                 cv2.imwrite(full_mask_path, mask)
             success, image = vidcap.read()
