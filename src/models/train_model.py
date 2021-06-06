@@ -1,17 +1,96 @@
-from keras_segmentation.models.unet  import mobilenet_unet
 import time
 from tensorflow.keras.callbacks import ModelCheckpoint, TensorBoard
 import os
+import tensorflow as tf
+from tensorflow_examples.models.pix2pix import pix2pix
+from glob import glob
 from src.data.make_dataset import IMG_WIDTH, IMG_HEIGHT, n_classes
+from src.visualization.visualize import predict_and_save
 
-epochs = 15
+EPOCHS = 15
+SEED = 0
+BATCH_SIZE = 8
+BUFFER_SIZE = 100
+model_name = "mobilenet_unet"
 
-checkpoints_path = "models/mobilenet_unet/{}/".format(int(time.time()))
-logs_path = "{}/logs".format(checkpoints_path)
+checkpoints_path = os.path.join("models", model_name, str(int(time.time())))
+logs_path = os.path.join(checkpoints_path, "logs")
+report_fugure_path = os.path.join("reports", "figures", model_name, os.path.split(checkpoints_path)[-1])
+
 os.makedirs(checkpoints_path, exist_ok=True)
 os.makedirs(logs_path, exist_ok=True)
+os.makedirs(report_fugure_path, exist_ok=True)
 
-model = mobilenet_unet(n_classes=n_classes ,  input_height=IMG_HEIGHT, input_width=IMG_WIDTH)
+train_images = "data/processed/train/images/"
+val_images = "data/processed/validation/images/"
+
+TRAINSET_SIZE = len(glob(train_images + "*.png"))
+VALSET_SIZE = len(glob(val_images + "*.png"))
+
+def parse_image(img_path):
+    image = tf.io.read_file(img_path)
+    image = tf.image.decode_png(image, channels=3)
+    image = tf.cast(image, tf.float32) / 255.0
+
+    mask_path = tf.strings.regex_replace(img_path, "images", "masks")
+    mask = tf.io.read_file(mask_path)
+    mask = tf.image.decode_png(mask, channels=1)
+    mask = tf.cast(mask, tf.float32)
+
+    return image, mask
+
+train_dataset = tf.data.Dataset.list_files(train_images + "*.png", seed=SEED)
+train_dataset = train_dataset.map(parse_image).shuffle(BUFFER_SIZE).batch(BATCH_SIZE).repeat().prefetch(buffer_size=tf.data.AUTOTUNE)
+
+val_dataset = tf.data.Dataset.list_files(val_images + "*.png", seed=SEED)
+val_dataset = val_dataset.map(parse_image).batch(BATCH_SIZE)
+
+base_model = tf.keras.applications.MobileNetV2(input_shape=[IMG_HEIGHT, IMG_WIDTH, 3], include_top=False)
+
+layer_names = [
+    'block_1_expand_relu',
+    'block_3_expand_relu',
+    'block_6_expand_relu',
+    'block_13_expand_relu',
+    'block_16_project',
+]
+base_model_outputs = [base_model.get_layer(name).output for name in layer_names]
+
+down_stack = tf.keras.Model(inputs=base_model.input, outputs=base_model_outputs)
+
+down_stack.trainable = False
+
+up_stack = [
+    pix2pix.upsample(512, 3),
+    pix2pix.upsample(256, 3),
+    pix2pix.upsample(128, 3),
+    pix2pix.upsample(64, 3),
+]
+
+def unet_model(output_channels):
+  inputs = tf.keras.layers.Input(shape=[IMG_HEIGHT, IMG_WIDTH, 3])
+
+  skips = down_stack(inputs)
+  x = skips[-1]
+  skips = reversed(skips[:-1])
+
+  for up, skip in zip(up_stack, skips):
+    x = up(x)
+    concat = tf.keras.layers.Concatenate()
+    x = concat([x, skip])
+
+  last = tf.keras.layers.Conv2DTranspose(
+      output_channels, 3, strides=2,
+      padding='same')
+
+  x = last(x)
+
+  return tf.keras.Model(inputs=inputs, outputs=x)
+
+model = unet_model(output_channels=n_classes)
+model.compile(optimizer='adam',
+              loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True),
+              metrics=['accuracy'])
 
 callbacks = [
     ModelCheckpoint(
@@ -22,10 +101,15 @@ callbacks = [
     TensorBoard(logs_path)
 ]
 
-model.train(
-    train_images="data/processed/train/images/",
-    train_annotations="data/processed/train/masks/",
-    val_images="data/processed/validation/images/",
-    val_annotations="data/processed/validation/masks/",
-    checkpoints_path=checkpoints_path , epochs=epochs
-)
+for image, mask in train_dataset.take(1):
+  sample_image, sample_mask = image[0], mask[0]
+
+predict_and_save(model, sample_image, os.path.join(report_fugure_path, "out_before_training.png"))
+
+model_history = model.fit(train_dataset, epochs=EPOCHS,
+                          validation_data=val_dataset,
+                          steps_per_epoch=TRAINSET_SIZE//BATCH_SIZE,
+                          validation_steps=VALSET_SIZE//BATCH_SIZE,
+                          callbacks=callbacks)
+
+predict_and_save(model, sample_image, os.path.join(report_fugure_path, "out_after_training.png"))
