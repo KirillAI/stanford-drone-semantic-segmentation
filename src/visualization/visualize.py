@@ -1,3 +1,8 @@
+import os
+import cv2
+import numpy as np
+from src.models.predict_model import predict_from_image
+
 def draw_segmentation_on_image(image, mask):
     import matplotlib.pyplot as plt
     import cv2
@@ -12,3 +17,6 @@ def draw_segmentation_on_image(image, mask):
     masked_image_w = cv2.addWeighted(masked_image, 0.5, image, 0.5, 0, masked_image)
     _ = plt.imshow(masked_image_w)
     plt.show()
+
+def predict_and_save(model, image, name):
+    cv2.imwrite(name, np.sum(predict_from_image(model, image), axis=-1)*50)
