@@ -19,4 +19,4 @@ def draw_segmentation_on_image(image, mask):
     plt.show()
 
 def predict_and_save(model, image, name):
-    cv2.imwrite(name, np.sum(predict_from_image(model, image), axis=-1)*50)
+    cv2.imwrite(name, np.argmax(predict_from_image(model, image), axis=-1)*50)
