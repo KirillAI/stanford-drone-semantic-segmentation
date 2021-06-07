@@ -100,7 +100,7 @@ model.compile(optimizer='adam',
 
 callbacks = [
     ModelCheckpoint(
-                filepath=checkpoints_path+"{epoch:05d}",
+                filepath=os.path.join(checkpoints_path, "{epoch:05d}"),
                 save_weights_only=False,
                 verbose=True
             ),
