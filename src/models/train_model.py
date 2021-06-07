@@ -4,6 +4,8 @@ import os
 import tensorflow as tf
 from tensorflow_examples.models.pix2pix import pix2pix
 from glob import glob
+import cv2
+import numpy as np
 from src.data.make_dataset import IMG_WIDTH, IMG_HEIGHT, n_classes
 from src.visualization.visualize import predict_and_save
 
@@ -108,6 +110,7 @@ callbacks = [
 for image, mask in train_dataset.take(1):
   sample_image, sample_mask = image[0], mask[0]
 
+cv2.imwrite(os.path.join(report_fugure_path, "true_mask.png"), np.tile(sample_mask, [1, 1, 3])*50)
 predict_and_save(model, sample_image, os.path.join(report_fugure_path, "out_before_training.png"))
 
 model_history = model.fit(train_dataset, epochs=EPOCHS,
