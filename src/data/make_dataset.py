@@ -14,7 +14,7 @@ from random import random, seed
 IMG_WIDTH = 224
 IMG_HEIGHT = 224
 
-n_classes = 6
+n_classes = 6 + 1 #дополнительный класс для фона
 
 test_size = 0.1
 
