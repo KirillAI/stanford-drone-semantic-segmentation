@@ -87,10 +87,14 @@ def unet_model(output_channels):
 
   return tf.keras.Model(inputs=inputs, outputs=x)
 
+class SparseMeanIOU(tf.keras.metrics.MeanIoU):
+    def update_state(self, y_true, y_pred, sample_weight=None):
+        return super().update_state(y_true, tf.argmax(y_pred, axis=-1), sample_weight)
+
 model = unet_model(output_channels=n_classes)
 model.compile(optimizer='adam',
               loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True),
-              metrics=['accuracy'])
+              metrics=[SparseMeanIOU(num_classes=n_classes)])
 
 callbacks = [
     ModelCheckpoint(
