@@ -9,7 +9,7 @@ import cv2
 import pandas as pd
 import numpy as np
 from sklearn.preprocessing import LabelEncoder
-from random import random, seed
+from random import seed
 
 IMG_WIDTH = 224
 IMG_HEIGHT = 224
@@ -67,6 +67,7 @@ def main(input_filepath, output_filepath):
     for video_path, annotation_path in paths:
         df = dic_annotations[video_path]
         vidcap = cv2.VideoCapture(video_path)
+        n_frames = int(vidcap.get(cv2.CAP_PROP_FRAME_COUNT))
         success, image = vidcap.read()
         height, width = image.shape[:2]
         scale_height = IMG_HEIGHT / height
@@ -77,7 +78,7 @@ def main(input_filepath, output_filepath):
             obj_frame = df.loc[df['frame'] == count]
             n_obj = len(obj_frame.index)
             if n_obj > 0:
-                if random() < test_size: #деление на обучение и тест
+                if  count < test_size * n_frames: #деление на обучение и тест
                     target_path_images = target_path_val_images
                     target_path_masks = target_path_val_masks
                 else:
