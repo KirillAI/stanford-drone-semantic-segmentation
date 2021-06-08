@@ -42,7 +42,7 @@ def parse_image(img_path):
     return image, mask
 
 train_dataset = tf.data.Dataset.list_files(train_images + "*.png", seed=SEED)
-train_dataset = train_dataset.map(parse_image).shuffle(BUFFER_SIZE).batch(BATCH_SIZE).repeat().prefetch(buffer_size=tf.data.AUTOTUNE)
+train_dataset = train_dataset.map(parse_image).shuffle(BUFFER_SIZE, seed=SEED).batch(BATCH_SIZE).repeat().prefetch(buffer_size=tf.data.AUTOTUNE)
 
 val_dataset = tf.data.Dataset.list_files(val_images + "*.png", seed=SEED)
 val_dataset = val_dataset.map(parse_image).batch(BATCH_SIZE)
