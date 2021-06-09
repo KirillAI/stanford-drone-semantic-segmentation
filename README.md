@@ -19,15 +19,15 @@ Solving semantic segmentation task for Stanford Drone Dataset
 
 For some frame, the true mask looks like the figure below.
 
-![True mask](reports\figures\mobilenet_unet\1623137784\true_mask.png)
+![True mask](reports/figures/mobilenet_unet/1623137784/true_mask.png)
 
 The figure below shows the predicted mask for this frame using MobileNet U-Net model before training.
 
-![Predicted mask before training](reports\figures\mobilenet_unet\1623137784\out_before_training.png)
+![Predicted mask before training](reports/figures/mobilenet_unet/1623137784/out_before_training.png)
 
 And after training on the small data, the predicted mask looks like
 
-![Predicted mask after training](reports\figures\mobilenet_unet\1623137784\out_after_training.png)
+![Predicted mask after training](reports/figures/mobilenet_unet/1623137784/out_after_training.png)
 
 ## TODO:
 
