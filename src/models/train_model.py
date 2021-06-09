@@ -18,11 +18,11 @@ model_name = "mobilenet_unet_aug"
 
 checkpoints_path = os.path.join("models", model_name, str(int(time.time())))
 logs_path = os.path.join(checkpoints_path, "logs")
-report_fugure_path = os.path.join("reports", "figures", model_name, os.path.split(checkpoints_path)[-1])
+report_figure_path = os.path.join("reports", "figures", model_name, os.path.split(checkpoints_path)[-1])
 
 os.makedirs(checkpoints_path, exist_ok=True)
 os.makedirs(logs_path, exist_ok=True)
-os.makedirs(report_fugure_path, exist_ok=True)
+os.makedirs(report_figure_path, exist_ok=True)
 
 train_images = "data/processed/train/images/"
 val_images = "data/processed/validation/images/"
@@ -126,8 +126,8 @@ callbacks = [
 for image, mask in train_dataset.take(1):
   sample_image, sample_mask = image[0], mask[0]
 
-cv2.imwrite(os.path.join(report_fugure_path, "true_mask.png"), np.tile(sample_mask, [1, 1, 3])*50)
-predict_and_save(model, sample_image, os.path.join(report_fugure_path, "out_before_training.png"))
+cv2.imwrite(os.path.join(report_figure_path, "true_mask.png"), np.tile(sample_mask, [1, 1, 3])*50)
+predict_and_save(model, sample_image, os.path.join(report_figure_path, "out_before_training.png"))
 
 model_history = model.fit(train_dataset, epochs=EPOCHS,
                           validation_data=val_dataset,
@@ -135,4 +135,4 @@ model_history = model.fit(train_dataset, epochs=EPOCHS,
                           validation_steps=VALSET_SIZE//BATCH_SIZE,
                           callbacks=callbacks)
 
-predict_and_save(model, sample_image, os.path.join(report_fugure_path, "out_after_training.png"))
+predict_and_save(model, sample_image, os.path.join(report_figure_path, "out_after_training.png"))
