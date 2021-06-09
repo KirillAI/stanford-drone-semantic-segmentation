@@ -1,57 +1,42 @@
 stanford-drone-semantic-segmentation
 ==============================
 
-Solving semantic segmentation task for Stanford Drone Dataset 
+Solving semantic segmentation task for Stanford Drone Dataset
 
-Project Organization
-------------
+## Solution Brief:
 
-    ├── LICENSE
-    ├── Makefile           <- Makefile with commands like `make data` or `make train`
-    ├── README.md          <- The top-level README for developers using this project.
-    ├── data
-    │   ├── external       <- Data from third party sources.
-    │   ├── interim        <- Intermediate data that has been transformed.
-    │   ├── processed      <- The final, canonical data sets for modeling.
-    │   └── raw            <- The original, immutable data dump.
-    │
-    ├── docs               <- A default Sphinx project; see sphinx-doc.org for details
-    │
-    ├── models             <- Trained and serialized models, model predictions, or model summaries
-    │
-    ├── notebooks          <- Jupyter notebooks. Naming convention is a number (for ordering),
-    │                         the creator's initials, and a short `-` delimited description, e.g.
-    │                         `1.0-jqp-initial-data-exploration`.
-    │
-    ├── references         <- Data dictionaries, manuals, and all other explanatory materials.
-    │
-    ├── reports            <- Generated analysis as HTML, PDF, LaTeX, etc.
-    │   └── figures        <- Generated graphics and figures to be used in reporting
-    │
-    ├── requirements.txt   <- The requirements file for reproducing the analysis environment, e.g.
-    │                         generated with `pip freeze > requirements.txt`
-    │
-    ├── setup.py           <- makes project pip installable (pip install -e .) so src can be imported
-    ├── src                <- Source code for use in this project.
-    │   ├── __init__.py    <- Makes src a Python module
-    │   │
-    │   ├── data           <- Scripts to download or generate data
-    │   │   └── make_dataset.py
-    │   │
-    │   ├── features       <- Scripts to turn raw data into features for modeling
-    │   │   └── build_features.py
-    │   │
-    │   ├── models         <- Scripts to train models and then use trained models to make
-    │   │   │                 predictions
-    │   │   ├── predict_model.py
-    │   │   └── train_model.py
-    │   │
-    │   └── visualization  <- Scripts to create exploratory and results oriented visualizations
-    │       └── visualize.py
-    │
-    └── tox.ini            <- tox file with settings for running tox; see tox.readthedocs.io
+1. To train the semantic segmentation mask prediction, bounding boxes are used as are.
 
+2. Loss is *cross-entropy*.
 
---------
+3. Metric is *mean IoU*.
 
-<p><small>Project based on the <a target="_blank" href="https://drivendata.github.io/cookiecutter-data-science/">cookiecutter data science project template</a>. #cookiecutterdatascience</small></p>
+4. Transfer learning for encoder in *U-Net*, freeze encoder and train only decoder.
+
+5. Augmentation (random flip left-right and random shift).
+
+## Examples:
+
+For some frame, the true mask looks like the figure below.
+
+![True mask](reports\figures\mobilenet_unet\1623137784\true_mask.png)
+
+The figure below shows the predicted mask for this frame using MobileNet U-Net model before training.
+
+![Predicted mask before training](reports\figures\mobilenet_unet\1623137784\out_before_training.png)
+
+And after training on the small data, the predicted mask looks like
+
+![Predicted mask after training](reports\figures\mobilenet_unet\1623137784\out_after_training.png)
+
+## TODO:
+
+- hyperparameter optimization
+
+- loss function from [TernausNet](https://arxiv.org/pdf/1801.05746.pdf)
+
+- bounding box as a bad semantic segmentation, improving it using self-training [[1](https://arxiv.org/pdf/2006.06882.pdf), [2](https://arxiv.org/pdf/1810.07911.pdf), [3](https://arxiv.org/pdf/2104.11692.pdf), [4](https://arxiv.org/pdf/2007.09886v2.pdf)]
+
+- improving semantic segmentation using [video prediction](https://medium.com/visionwizard/video-semantic-segmentation-a-novel-approach-from-nvidia-8e3a89aa7aff)
+
+- manually create true semantic segmentation masks for a part of data and train a neural network, using [semi-supervised learning](https://arxiv.org/pdf/2106.01226v2.pdf) or [semi-supervised learning + GAN](https://openreview.net/pdf?id=SJQO7UJCW)
