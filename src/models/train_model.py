@@ -6,6 +6,7 @@ from tensorflow_examples.models.pix2pix import pix2pix
 from glob import glob
 import cv2
 import numpy as np
+import tensorflow_addons as tfa
 from src.data.make_dataset import IMG_WIDTH, IMG_HEIGHT, n_classes
 from src.visualization.visualize import predict_and_save
 
@@ -13,7 +14,7 @@ EPOCHS = 15
 SEED = 0
 BATCH_SIZE = 8
 BUFFER_SIZE = 100
-model_name = "mobilenet_unet"
+model_name = "mobilenet_unet_aug"
 
 checkpoints_path = os.path.join("models", model_name, str(int(time.time())))
 logs_path = os.path.join(checkpoints_path, "logs")
@@ -28,6 +29,21 @@ val_images = "data/processed/validation/images/"
 
 TRAINSET_SIZE = len(glob(train_images + "*.png"))
 VALSET_SIZE = len(glob(val_images + "*.png"))
+  
+def random_shift(image, mask):
+    tx = tf.random.uniform(()) * 0.8 - 0.4
+    ty = tf.random.uniform(()) * 0.8 - 0.4
+    transforms = [1, 0, -tx, 0, 1, -ty, 0, 0]
+    image = tfa.image.transform(image[tf.newaxis, ...], transforms, interpolation='NEAREST')[0]
+    mask = tfa.image.transform(mask[tf.newaxis, ...], transforms, interpolation='NEAREST')[0]
+    return image, mask
+
+def augmentation(image, mask):
+    image, mask = random_shift(image, mask)
+    if tf.random.uniform(()) > 0.5:
+        image = tf.image.flip_left_right(image)
+        mask = tf.image.flip_left_right(mask)
+    return image, mask
 
 def parse_image(img_path):
     image = tf.io.read_file(img_path)
@@ -42,7 +58,7 @@ def parse_image(img_path):
     return image, mask
 
 train_dataset = tf.data.Dataset.list_files(train_images + "*.png", seed=SEED)
-train_dataset = train_dataset.map(parse_image).shuffle(BUFFER_SIZE, seed=SEED).batch(BATCH_SIZE).repeat().prefetch(buffer_size=tf.data.AUTOTUNE)
+train_dataset = train_dataset.map(parse_image).map(augmentation).shuffle(BUFFER_SIZE, seed=SEED).batch(BATCH_SIZE).repeat().prefetch(buffer_size=tf.data.AUTOTUNE)
 
 val_dataset = tf.data.Dataset.list_files(val_images + "*.png", seed=SEED)
 val_dataset = val_dataset.map(parse_image).batch(BATCH_SIZE)
